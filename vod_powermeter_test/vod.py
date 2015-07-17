@@ -4,7 +4,7 @@ import socket, traceback
 import json
 import time
 import logging
-import telnet
+#import telnet
 import printInerface
 
 host = '' # Bind to all interfaces
@@ -206,4 +206,5 @@ def testStart():
 
 if __name__ == '__main__':
 	printInerface.init(devices_id[0], time_interval)
-	testStart();
+	testStart()
+
