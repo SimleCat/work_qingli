@@ -7,6 +7,7 @@ import time
 import logging
 import mytelnet
 import interface
+import copy
 # import printInerface
 
 host = '' # Bind to all interfaces
@@ -31,6 +32,7 @@ time_interval = 0.5
 num_pm_test = 100
 time_pm_interval = 0.05
 stat_dict = {}
+info_dict = {}
 test_items = ['Total', 'ScanIP', 'Mixture', 'Status', 'Gain', 'PowerMeter', 'ReverbSW']
 
 # LOG_FILE = 'log_%s.txt' % time.strftime("%Y%m%d-%H%M", time.localtime())
@@ -216,8 +218,10 @@ def testPowerMeter(socket_udp, dev_info, dev_id):
 				dev_id, cmd)
 		if not data or not data.has_key('value_left') or not data.has_key('value_right'):
 			outputInfo("Error: near power meter")
-			cnt_error += 1
-			continue
+			# cnt_error += 1
+			# continue
+			cnt_error = num_pm_test
+			break
 		if data['value_left'] == "-inf" or data['value_right'] == "-inf":
 			cnt_error += 1
 			continue
@@ -267,26 +271,32 @@ def testOneDevice(socket_broadcast, socket_udp, cnt, dev_id):
 		stat_dict[dev_id]['ScanIP'] += 1
 		# return False
 		res = False
+	time.sleep(time_interval)
 
 	if not testMixture(socket_udp, dev_info, cnt, dev_id):
 		res = False
 		stat_dict[dev_id]['Mixture'] += 1
+	time.sleep(time_interval)
 
 	if not testStatus(socket_udp, dev_info, dev_id):
 		res = False
 		stat_dict[dev_id]['Status'] += 1
+	time.sleep(time_interval)
 
 	if not testGain(socket_udp, dev_info, cnt, dev_id):
 		res = False
 		stat_dict[dev_id]['Gain'] += 1
+	time.sleep(time_interval)
 
 	if not testPowerMeter(socket_udp, dev_info, dev_id):
 		res = False
 		stat_dict[dev_id]['PowerMeter'] += 1
+	time.sleep(time_interval)
 
 	if not testReverbSW(socket_udp, dev_info, dev_id):
 		res = False
 		stat_dict[dev_id]['ReverbSW'] += 1
+	time.sleep(time_interval)
 
 	if not res:
 		stat_dict[dev_id]['Total'] += 1
@@ -356,6 +366,7 @@ def main():
 	else:
 		devices_id = loadDeviceID(file_deviceid)
 	initStatDict()
+	stat_dict_old = copy.deepcopy(stat_dict)
 
 	socket_broadcast = getBroadcastSocket(host, portS)
 	socket_udp = getUDPSocket(host, portC)
@@ -365,19 +376,22 @@ def main():
 
 	interface.init(len(devices_id))
 	interface.printTitle(len(devices_id), len(dev_error), cnt_test, cnt_reboot)
-	interface.printInfo_plus(devices_id, -1, test_items, stat_dict)
+	interface.printInfo_plus(devices_id, -1, test_items, stat_dict, stat_dict_old)
 	outputInfo("*** Start Test")
 	# exit(0)
 	while True:
 		for i in range(num_test_pre_reboot):
 			cnt_test += 1
 			for index, dev_id in enumerate(devices_id):
+				stat_dict_old[dev_id] = copy.deepcopy(stat_dict[dev_id])
 				ret = testOneDevice(socket_broadcast, socket_udp, i, dev_id)
 				if not ret and dev_id not in dev_error:
 					dev_error.append(dev_id)
 				interface.printTitle(len(devices_id), len(dev_error), cnt_test, cnt_reboot)
-				interface.printInfo_plus(devices_id, index, test_items, stat_dict)
+				interface.printInfo_plus(devices_id, index, test_items, stat_dict, stat_dict_old)
+				# stat_dict_old[dev_id] = copy.deepcopy(stat_dict[dev_id])
 				time.sleep(time_interval)
+			# stat_dict_old = copy.deepcopy(stat_dict)
 		# mytelnet.reboot(dev_info)
 		time.sleep(20)
 		cnt_reboot += 1

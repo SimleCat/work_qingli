@@ -62,7 +62,7 @@ def printInfo(devices_id, num, test_items, stat_dict):
 	sys.stdout.flush()
 
 
-def printInfo_plus(devices_id, num, test_items, stat_dict):
+def printInfo_plus(devices_id, num, test_items, stat_dict, stat_dict_old):
 	x = 1
 	y = 3
 	y_cur = y
@@ -111,20 +111,25 @@ def printInfo_plus(devices_id, num, test_items, stat_dict):
 	for index, dev_id in enumerate(devices_id):
 		dev_stat = stat_dict[dev_id]
 		line = ''
-		str_node = myprint.useStyle('|', mode, fore, back)
 		str_node_out = ''
+		fore_cur = fore
+		back_cur = back
 		if index == num_next:
 			str_node_out = myprint.useStyle('|', mode, fore_select, back_select)
+			# str_node = myprint.useStyle('|', mode, fore_select, back_select)
+			fore_cur = fore_select
+			back_cur = back_select
 		else:
 			str_node_out = myprint.useStyle('|', mode, fore_title, back_title)
+		str_node = myprint.useStyle('|', mode, fore_cur, back_cur)
 		line += str_node_out
 
 		str_tmp = ' ' + str(dev_id) + ' '
 		str_tmp = str_tmp.ljust(len_max_devid)
 		if dev_stat['Total'] > 0:
-			str_tmp = myprint.useStyle(str_tmp, mode, fore_error, back_error)
+			str_tmp = myprint.useStyle(str_tmp, mode, fore_error, back_cur)
 		else:
-			str_tmp = myprint.useStyle(str_tmp, mode, fore, back)
+			str_tmp = myprint.useStyle(str_tmp, mode, fore_cur, back_cur)
 		line += str_tmp + str_node
 
 		for i, item in enumerate(test_items):
@@ -132,10 +137,11 @@ def printInfo_plus(devices_id, num, test_items, stat_dict):
 			len_max = list_len_max[i+1]
 			str_tmp = ' ' + str(cnt_error) + ' '
 			str_tmp = str_tmp.ljust(len_max)
-			if cnt_error > 0:
-				str_tmp = myprint.useStyle(str_tmp, mode, fore_error, back_error)
+			if cnt_error == 0 or (stat_dict_old[dev_id][item] == cnt_error):
+			# if cnt_error > 0:
+				str_tmp = myprint.useStyle(str_tmp, mode, fore_cur, back_cur)
 			else:
-				str_tmp = myprint.useStyle(str_tmp, mode, fore, back)
+				str_tmp = myprint.useStyle(str_tmp, mode, fore_error, back_cur)
 			line += str_tmp
 			if i != len(test_items)-1:
 				line += str_node
