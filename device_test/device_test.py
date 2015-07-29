@@ -31,7 +31,7 @@ time_interval = 0.5
 num_pm_test = 100
 time_pm_interval = 0.05
 stat_dict = {}
-test_items = ['Total', 'ScanIP', 'Mixture', 'Status', 'Gain', 'PowerMeter']
+test_items = ['Total', 'ScanIP', 'Mixture', 'Status', 'Gain', 'PowerMeter', 'ReverbSW']
 
 # LOG_FILE = 'log_%s.txt' % time.strftime("%Y%m%d-%H%M", time.localtime())
 LOG_FILE = 'log.txt'
@@ -116,8 +116,10 @@ def verifyDeviceInfo(dev_info):
 	return True
 
 
-def testBase(socket_udp, addr, dev_type, dev_id, cmd, value=None, channel=None):
-	if channel:
+def testBase(socket_udp, addr, dev_type, dev_id, cmd, value=None, channel=None, status=None):
+	if status:
+		send = cmdMix = '{"cmd":"%s","status":"%s","deviceID":"%s"}'%(cmd, status, dev_id)
+	elif channel:
 		send = cmdMix = '{"cmd":"%s", "channel":"%s","value":"%s","deviceID":"%s"}'%(cmd, channel, value, dev_id)
 	elif value:
 		send = cmdMix = '{"cmd":"%s","value":"%s","deviceID":"%s"}'%(cmd, value, dev_id)
@@ -150,7 +152,7 @@ def testBase(socket_udp, addr, dev_type, dev_id, cmd, value=None, channel=None):
 def testMixture(socket_udp, dev_info, value, dev_id):
 	cmd = "reqMix"
 	dev_type = 'reverb'
-	value = "0.%d" % value
+	value = "0.%d" % (value+1)
 	outputInfo("*** Test Mixture")
 	if not dev_info or not dev_info.has_key(dev_type):
 		return False
@@ -239,6 +241,23 @@ def testPowerMeter(socket_udp, dev_info, dev_id):
 	return True
 
 
+def testReverbSW(socket_udp, dev_info, dev_id):
+	cmd = "reqReverbSW"
+	dev_type = "reverb"
+	status_list = ["on", "off"]
+	outputInfo("*** Test ReverbSW")
+	if not dev_info or not dev_info.has_key(dev_type):
+		return False
+	for status in status_list:
+		data = testBase(socket_udp, (dev_info[dev_type], port_udp_to), dev_type, \
+			dev_id, cmd, status=status)
+		if not data or not data.has_key('status') or data['status'] != status:
+			outputInfo("Error: near ReverbSW")
+			return False
+		time.sleep(time_interval)
+	return True
+
+
 def testOneDevice(socket_broadcast, socket_udp, cnt, dev_id):
 	res = True
 
@@ -264,6 +283,10 @@ def testOneDevice(socket_broadcast, socket_udp, cnt, dev_id):
 	if not testPowerMeter(socket_udp, dev_info, dev_id):
 		res = False
 		stat_dict[dev_id]['PowerMeter'] += 1
+
+	if not testReverbSW(socket_udp, dev_info, dev_id):
+		res = False
+		stat_dict[dev_id]['ReverbSW'] += 1
 
 	if not res:
 		stat_dict[dev_id]['Total'] += 1
@@ -300,7 +323,7 @@ def initStatDict():
 	global stat_dict
 	for dev_id in devices_id:
 		stat = {}
-		stat['Total'] = 0
+		# stat['Total'] = 0
 		for item in test_items:
 			stat[item] = 0
 		stat_dict[dev_id] = stat
