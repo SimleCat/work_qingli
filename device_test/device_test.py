@@ -22,7 +22,7 @@ file_deviceid = r'device_id.txt'
 device_types = ["judgement", "reverb", "recorder"]
 
 buf_size = 1024
-time_out = 1.0
+time_out = 1
 
 num_test_pre_reboot = 10
 cnt_test = 0
@@ -244,7 +244,7 @@ def testPowerMeter(socket_udp, dev_info, dev_id):
 def testReverbSW(socket_udp, dev_info, dev_id):
 	cmd = "reqReverbSW"
 	dev_type = "reverb"
-	status_list = ["on", "off"]
+	status_list = ["off", "on"]
 	outputInfo("*** Test ReverbSW")
 	if not dev_info or not dev_info.has_key(dev_type):
 		return False

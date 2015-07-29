@@ -80,7 +80,7 @@ def printInfo_plus(devices_id, num, test_items, stat_dict):
 
 	num_next = num + 1
 	if num >= len(devices_id)-1:
-		num_next = 1
+		num_next = 0
 
 	dev_id = devices_id[num]
 	dev_stat = stat_dict[dev_id]
